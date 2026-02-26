@@ -1,5 +1,6 @@
+const NotificationType = { TEST: 'TEST' } as const;
+const NotificationStatus = { PENDING: 'PENDING' } as const;
 import { Injectable } from '@nestjs/common';
-import { NotificationStatus, NotificationType } from '@prisma/client';
 import { UserContextService } from '../common/auth/user-context.service';
 import { PrismaService } from '../prisma/prisma.service';
 

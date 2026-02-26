@@ -1,6 +1,8 @@
+const EventType = { REMINDER_SENT: 'REMINDER_SENT' } as const;
+const NotificationStatus = { PENDING: 'PENDING', SENT: 'SENT' } as const;
+const NotificationType = { EXPIRED_ALERT: 'EXPIRED_ALERT', EXPIRY_REMINDER: 'EXPIRY_REMINDER' } as const;
 import { Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { EventType, NotificationStatus, NotificationType } from '@prisma/client';
 import { UserContextService } from '../common/auth/user-context.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateReminderPreferencesDto } from './reminders.dto';

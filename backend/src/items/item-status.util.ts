@@ -1,5 +1,4 @@
-import { ItemStatus } from '@prisma/client';
-
+export type ItemStatus = 'ACTIVE' | 'USED' | 'DISCARDED' | 'EXPIRED_CHECK';
 export type DisplayStatus = 'fresh' | 'use_soon' | 'expires_today' | 'expired_check' | 'used' | 'discarded';
 
 export function computeDisplayStatus(status: ItemStatus, expiryDate?: Date | null): DisplayStatus {

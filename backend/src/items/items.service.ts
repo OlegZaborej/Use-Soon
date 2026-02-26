@@ -1,5 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { EventType, ItemStatus, Prisma } from '@prisma/client';
+const EventType = { CREATED:'CREATED', UPDATED:'UPDATED', MARK_USED:'MARK_USED', MARK_DISCARDED:'MARK_DISCARDED', MOVED:'MOVED', EXTEND_EXPIRY:'EXTEND_EXPIRY', REMINDER_SENT:'REMINDER_SENT' } as const;
+type EventType = typeof EventType[keyof typeof EventType];
+const ItemStatus = { ACTIVE:'ACTIVE', USED:'USED', DISCARDED:'DISCARDED', EXPIRED_CHECK:'EXPIRED_CHECK' } as const;
+type ItemStatus = typeof ItemStatus[keyof typeof ItemStatus];
 import { UserContextService } from '../common/auth/user-context.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateItemDto, ExtendExpiryDto, MoveItemDto, UpdateItemDto } from './items.dto';
@@ -11,7 +14,7 @@ export class ItemsService {
 
   async list(userId: string) {
     const householdId = await this.userCtx.getHouseholdId(userId);
-    const items = await this.prisma.inventoryItem.findMany({ where: { householdId }, orderBy: { createdAt: 'desc' } });
+    const items: any[] = await this.prisma.inventoryItem.findMany({ where: { householdId }, orderBy: { createdAt: 'desc' } });
     return items.map((item) => ({ ...item, displayStatus: computeDisplayStatus(item.status, item.expiryDate) }));
   }
 
@@ -65,9 +68,10 @@ export class ItemsService {
 
   private async mark(userId: string, id: string, status: ItemStatus, eventType: EventType) {
     const householdId = await this.userCtx.getHouseholdId(userId);
-    await this.ensureItem(id, householdId);
+    const before = await this.ensureItem(id, householdId);
+    const prevDisplayStatus = computeDisplayStatus(before.status, before.expiryDate);
     const item = await this.prisma.inventoryItem.update({ where: { id }, data: { status } });
-    await this.event(id, householdId, eventType);
+    await this.event(id, householdId, eventType, { prevDisplayStatus });
     return item;
   }
 
@@ -77,7 +81,7 @@ export class ItemsService {
     return item;
   }
 
-  private mapItemDto(dto: CreateItemDto | UpdateItemDto): Prisma.InventoryItemUncheckedCreateInput {
+  private mapItemDto(dto: CreateItemDto | UpdateItemDto) {
     return {
       name: dto.name,
       category: dto.category,

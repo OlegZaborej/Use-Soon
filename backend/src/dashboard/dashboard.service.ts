@@ -10,7 +10,7 @@ export class DashboardService {
 
   async get(userId: string) {
     const householdId = await this.userCtx.getHouseholdId(userId);
-    const all = await this.prisma.inventoryItem.findMany({ where: { householdId }, orderBy: { createdAt: 'desc' } });
+    const all: any[] = await this.prisma.inventoryItem.findMany({ where: { householdId }, orderBy: { createdAt: 'desc' } });
     const useSoon = all.filter((i) => ['use_soon', 'expires_today', 'expired_check'].includes(computeDisplayStatus(i.status, i.expiryDate)));
     const week = all.filter((i) => {
       if (!i.expiryDate) return false;

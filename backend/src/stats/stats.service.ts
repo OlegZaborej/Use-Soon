@@ -9,13 +9,13 @@ export class StatsService {
 
   async summary(userId: string) {
     const householdId = await this.userCtx.getHouseholdId(userId);
-    const usedEvents = await this.prisma.itemEvent.findMany({
+    const usedEvents: any[] = await this.prisma.itemEvent.findMany({
       where: { householdId, eventType: 'MARK_USED' },
       include: { item: true },
     });
 
-    const rescued = usedEvents.filter((e) => ['use_soon', 'expires_today', 'expired_check'].includes(computeDisplayStatus(e.item.status, e.item.expiryDate)));
-    const estimatedSavings = rescued.reduce((acc, e) => acc + (e.item.priceMinor || 0), 0);
+    const rescued = usedEvents.filter((e) => ['use_soon', 'expires_today', 'expired_check'].includes(e.metadata?.prevDisplayStatus || computeDisplayStatus(e.item.status, e.item.expiryDate)));
+    const estimatedSavings = rescued.reduce((acc: number, e: any) => acc + (e.item.priceMinor || 0), 0);
     const discardedItems = await this.prisma.inventoryItem.count({ where: { householdId, status: 'DISCARDED' } });
 
     return {

@@ -1,12 +1,19 @@
-import { IsEnum, IsOptional, IsString } from 'class-validator';
-import { ZoneType } from '@prisma/client';
+import { IsOptional, IsString } from 'class-validator';
+
+export const ZoneType = {
+  FREEZER: 'FREEZER',
+  FRIDGE: 'FRIDGE',
+  PANTRY: 'PANTRY',
+} as const;
+
+type ZoneTypeValue = (typeof ZoneType)[keyof typeof ZoneType];
 
 export class CreateStorageZoneDto {
   @IsString()
   name!: string;
 
-  @IsEnum(ZoneType)
-  type!: ZoneType;
+  @IsString()
+  type!: ZoneTypeValue;
 }
 
 export class UpdateStorageZoneDto {
@@ -15,6 +22,6 @@ export class UpdateStorageZoneDto {
   name?: string;
 
   @IsOptional()
-  @IsEnum(ZoneType)
-  type?: ZoneType;
+  @IsString()
+  type?: ZoneTypeValue;
 }
