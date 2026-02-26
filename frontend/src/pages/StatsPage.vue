@@ -1,0 +1,2 @@
+<template><div><h1>Stats</h1><div>Rescued: {{ stats.summary?.rescuedItems }}</div><div>Discarded: {{ stats.summary?.discardedItems }}</div><div>Estimated savings: {{ (stats.summary?.estimatedSavingsMinor||0)/100 }}</div></div></template>
+<script setup lang="ts">import {onMounted} from 'vue';import {useStatsStore} from '../stores/stats';const stats=useStatsStore();onMounted(()=>stats.fetchSummary());</script>

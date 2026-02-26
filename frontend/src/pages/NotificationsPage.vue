@@ -1,0 +1,2 @@
+<template><div><h1>Notifications</h1><AppButton @click="store.test">Test notification</AppButton><div v-for="n in store.list" :key="n.id">{{ n.title }} - {{ n.status }}</div></div></template>
+<script setup lang="ts">import {onMounted} from 'vue';import {useNotificationsStore} from '../stores/notifications';import AppButton from '../components/AppButton.vue';const store=useNotificationsStore();onMounted(()=>store.fetch());</script>

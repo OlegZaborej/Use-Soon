@@ -1,0 +1,214 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum MemberRole {
+  OWNER
+  MEMBER
+}
+
+enum ZoneType {
+  FREEZER
+  FRIDGE
+  PANTRY
+}
+
+enum ItemCategory {
+  MEAT
+  FISH
+  VEGETABLE
+  FRUIT
+  READY_MEAL
+  DAIRY
+  BAKERY
+  OTHER
+}
+
+enum ItemStatus {
+  ACTIVE
+  USED
+  DISCARDED
+  EXPIRED_CHECK
+}
+
+enum ItemSource {
+  MANUAL
+  RECEIPT
+  IMPORT
+}
+
+enum EventType {
+  CREATED
+  UPDATED
+  MARK_USED
+  MARK_DISCARDED
+  MOVED
+  EXTEND_EXPIRY
+  REMINDER_SENT
+}
+
+enum NotificationType {
+  EXPIRY_REMINDER
+  EXPIRED_ALERT
+  TEST
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  SKIPPED
+}
+
+model User {
+  id              String              @id @default(cuid())
+  email           String              @unique
+  passwordHash    String
+  name            String?
+  householdMember HouseholdMember?
+  reminderPref    ReminderPreference?
+  subscriptions   Subscription[]
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+}
+
+model Household {
+  id           String            @id @default(cuid())
+  name         String
+  members      HouseholdMember[]
+  storageZones StorageZone[]
+  items        InventoryItem[]
+  notifications NotificationQueue[]
+  recipes      Recipe[]
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+}
+
+model HouseholdMember {
+  id          String    @id @default(cuid())
+  householdId String
+  userId      String    @unique
+  role        MemberRole @default(OWNER)
+  household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([householdId])
+}
+
+model StorageZone {
+  id          String         @id @default(cuid())
+  householdId String
+  name        String
+  type        ZoneType
+  household   Household      @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  items       InventoryItem[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([householdId])
+}
+
+model InventoryItem {
+  id            String      @id @default(cuid())
+  householdId   String
+  storageZoneId String
+  name          String
+  category      ItemCategory @default(OTHER)
+  quantityValue Float?
+  quantityUnit  String?
+  expiryDate    DateTime?
+  priceMinor    Int?
+  currencyCode  String?      @default("USD")
+  notes         String?
+  source        ItemSource   @default(MANUAL)
+  status        ItemStatus   @default(ACTIVE)
+  addedAt       DateTime     @default(now())
+  household     Household    @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  storageZone   StorageZone  @relation(fields: [storageZoneId], references: [id])
+  events        ItemEvent[]
+  notifications NotificationQueue[]
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([householdId])
+  @@index([expiryDate])
+  @@index([status])
+}
+
+model ItemEvent {
+  id           String      @id @default(cuid())
+  itemId        String
+  householdId   String
+  eventType     EventType
+  metadata      Json?
+  item          InventoryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  household     Household  @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  @@index([householdId])
+}
+
+model ReminderPreference {
+  id               String   @id @default(cuid())
+  userId            String   @unique
+  remindDaysBefore  Int[]    @default([7, 3, 1])
+  notifyExpired     Boolean  @default(true)
+  quietHoursStart   String?
+  quietHoursEnd     String?
+  pushEnabled       Boolean  @default(true)
+  emailEnabled      Boolean  @default(false)
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model NotificationQueue {
+  id              String             @id @default(cuid())
+  householdId      String
+  userId           String
+  itemId           String?
+  type             NotificationType
+  status           NotificationStatus @default(PENDING)
+  title            String
+  body             String
+  scheduledFor     DateTime
+  sentAt           DateTime?
+  dedupeKey        String? @unique
+  household        Household          @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  item             InventoryItem?     @relation(fields: [itemId], references: [id], onDelete: SetNull)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  @@index([householdId])
+  @@index([status])
+}
+
+model Recipe {
+  id          String    @id @default(cuid())
+  householdId String
+  title       String
+  notes       String?
+  household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([householdId])
+}
+
+model Subscription {
+  id          String   @id @default(cuid())
+  userId      String
+  endpoint    String
+  p256dh      String
+  auth        String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

@@ -1,0 +1,2 @@
+<template><div><h1 class="text-2xl font-bold">Use Soon</h1><router-link to="/items/new" class="text-green-600">Add item</router-link><SavingsCard :amount="stats.dashboard?.estimatedSavings||0"/><UseSoonList :items="stats.dashboard?.useSoon||[]"/></div></template>
+<script setup lang="ts">import {onMounted} from 'vue';import {useStatsStore} from '../stores/stats';import SavingsCard from '../components/SavingsCard.vue';import UseSoonList from '../components/UseSoonList.vue';const stats=useStatsStore();onMounted(()=>stats.fetchDashboard());</script>
